@@ -11,6 +11,7 @@ from queue import PriorityQueue, Empty
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
+import gc
 
 INPUT_ROOT = Path(os.getenv("INPUT_ROOT", "/mnt/input_images"))
 OUTPUT_ROOT = Path(os.getenv("OUTPUT_ROOT", "/mnt/output_images"))
@@ -36,7 +37,7 @@ def init_rembg():
     """Initialize rembg session"""
     global rembg_session
     if rembg_session is None:
-        rembg_session = rembg.new_session('u2net')
+        rembg_session = rembg.new_session('isnet-general-use')
     return rembg_session
 
 def get_priority_score(input_path, is_recent=False):
@@ -192,6 +193,8 @@ def process_image(input_path, output_path):
     except Exception as e:
         print(f"Error processing {input_path}: {e}")
         stats["failed"] += 1
+    finally:
+        gc.collect()
 
 def worker():
     """Background worker that processes queued tasks"""
