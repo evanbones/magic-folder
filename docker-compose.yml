@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   magic-folder:
+    image: magic-folder:latest
     build: .
     container_name: magic-folder
     restart: unless-stopped
