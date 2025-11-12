@@ -270,7 +270,7 @@ class ImageHandler(FileSystemEventHandler):
                 print(f"Batch detected: {len(files)} files")
             
             for file_path in files:
-                if os.path.exists(file_path) and os.path.splitext(file_path)[1].lower() in SUPPORTED_EXTENSIONS:
+                if file_path.exists() and file_path.suffix.lower() in SUPPORTED_EXTENSIONS:
                     priority = get_priority_score(file_path, is_recent=not is_batch)
                     task_queue.put((priority, file_path))
     
@@ -290,7 +290,7 @@ class ImageHandler(FileSystemEventHandler):
 
 
 if __name__ == "__main__":
-    os.makedirs(OUTPUT_ROOT, exist_ok=True)
+    OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     
     print("Initializing AI background removal model...")
     init_rembg()
