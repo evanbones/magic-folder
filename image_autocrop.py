@@ -36,7 +36,7 @@ def init_rembg():
     """Initialize rembg session"""
     global rembg_session
     if rembg_session is None:
-        rembg_session = rembg.new_session('u2net_human_seg')
+        rembg_session = rembg.new_session('u2net')
     return rembg_session
 
 def get_priority_score(input_path, is_recent=False):
