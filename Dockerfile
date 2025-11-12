@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY image_autocrop.py .
 COPY ocr_pdf.py .
 
-# Create folders (these can also be mapped as volumes)
+# Create folders
 RUN mkdir -p "/mnt/input_images" "/mnt/output_images" \
     "/mnt/input_pdfs" "/mnt/output_pdfs"
 
@@ -37,4 +37,4 @@ ENV INPUT_ROOT=/mnt/input_images \
     PDF_OUTPUT=/mnt/output_pdfs
 
 # Start both processors concurrently
-CMD ["bash", "-c", "python3 image_processor.py & python3 ocr_pdf.py && wait"]
+CMD ["bash", "-c", "python3 image_autocrop.py & python3 ocr_pdf.py & wait"]
