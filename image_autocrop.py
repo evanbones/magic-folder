@@ -202,6 +202,10 @@ def worker():
         try:
             priority, input_path = task_queue.get(timeout=1.0)
             
+            if input_path is None: 
+                task_queue.task_done()
+                continue 
+
             if not input_path.exists():
                 task_queue.task_done()
                 continue
@@ -302,8 +306,9 @@ if __name__ == "__main__":
     print(f"Max workers: {config.max_workers}")
     print(f"Batch detection: {config.batch_threshold} files in {config.batch_detection_delay}s")
     
-    threading.Thread(target=worker, daemon=True).start()
-    
+    worker_thread = threading.Thread(target=worker)
+    worker_thread.start()
+
     queue_existing_images()
 
     print(f"Watching: {INPUT_ROOT}")
@@ -319,10 +324,9 @@ if __name__ == "__main__":
         shutdown_event.set()
         observer.stop()
         
-        for _ in range(config.max_workers):
-            task_queue.put((float('inf'), None))
-
-        executor.shutdown(wait=True)
+        task_queue.put((float('inf'), None)) 
+        worker_thread.join()
+        executor.shutdown(wait=True) 
         print("Goodbye!")
     finally:
         observer.join()
