@@ -1,15 +1,12 @@
 import time
-import shutil
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import ocrmypdf
 import os
 
-
 INPUT_FOLDER = Path(os.getenv("PDF_INPUT", "/mnt/input_pdfs"))
 OUTPUT_FOLDER = Path(os.getenv("PDF_OUTPUT", "/mnt/output_pdfs"))
-
 
 def ocr_pdf(input_pdf: Path):
     output_pdf = OUTPUT_FOLDER / input_pdf.name
@@ -30,13 +27,12 @@ def ocr_pdf(input_pdf: Path):
 
 class PDFHandler(FileSystemEventHandler):
     def on_created(self, event):
-        filepath = Path(event.src_path)
+        filepath = Path(str(event.src_path))
         if filepath.suffix.lower() == '.pdf':
-            time.sleep(1)  # Let the file finish copying
+            time.sleep(1)
             ocr_pdf(filepath)
 
 if __name__ == "__main__":
-
     print("Scanning existing PDFs...")
     for pdf_file in INPUT_FOLDER.glob("*.pdf"):
         ocr_pdf(pdf_file)
