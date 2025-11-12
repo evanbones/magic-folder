@@ -3,7 +3,7 @@ import time
 import numpy as np
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
-from watchdog.observers import Observer
+from watchdog.observers.polling import PollingObserver
 from watchdog.events import FileSystemEventHandler
 import rembg
 import threading
@@ -312,13 +312,15 @@ if __name__ == "__main__":
     queue_existing_images()
 
     print(f"Watching: {INPUT_ROOT}")
-    observer = Observer()
+
+    from watchdog.observers.polling import PollingObserver
+    observer = PollingObserver() 
     observer.schedule(ImageHandler(), path=str(INPUT_ROOT), recursive=True)
     observer.start()
         
     try:
         while True:
-            time.sleep(1)  # Just keep the main thread alive
+            time.sleep(1)
     except KeyboardInterrupt:
         print("\nShutting down...")
         shutdown_event.set()

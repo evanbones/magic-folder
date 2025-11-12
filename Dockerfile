@@ -37,4 +37,4 @@ ENV INPUT_ROOT=/mnt/input_images \
     PDF_OUTPUT=/mnt/output_pdfs
 
 # Start both processors concurrently
-CMD ["bash", "-c", "python3 image_autocrop.py & python3 ocr_pdf.py & wait"]
+CMD ["bash", "-c", "python3 -u image_autocrop.py & python3 -u ocr_pdf.py & wait"]

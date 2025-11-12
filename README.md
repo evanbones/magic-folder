@@ -71,18 +71,7 @@ docker build -t magic-folder .
 ## Running Container
 
 ```powershell
-# Stop the old container
-docker rm -f magic-folder
-
-# Run the new container
-docker run -d `
-  --name magic-folder `
-  --restart unless-stopped `
-  -v "\\wsl.localhost\Ubuntu\mnt\vpoho_scratch\1. DROP IMAGES HERE:/mnt/input_images" `
-  -v "\\wsl.localhost\Ubuntu\mnt\vpoho_scratch\2. PROCESSED IMAGES:/mnt/output_images" `
-  -v "\\wsl.localhost\Ubuntu\mnt\vpoho_scratch\3. DROP PDFS HERE:/mnt/input_pdfs" `
-  -v "\\wsl.localhost\Ubuntu\mnt\vpoho_scratch\4. PROCESSED PDFS:/mnt/output_pdfs" `
-  magic-folder
+docker-compose up -d --build
 ```
 
 ### Mount Mappings

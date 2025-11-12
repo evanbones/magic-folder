@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  magic-folder:
+    build: .
+    container_name: magic-folder
+    restart: unless-stopped
+    volumes:
+      - "\\\\wsl.localhost\\Ubuntu\\mnt\\vpoho_scratch\\1. DROP IMAGES HERE:/mnt/input_images"
+      - "\\\\wsl.localhost\\Ubuntu\\mnt\\vpoho_scratch\\2. PROCESSED IMAGES:/mnt/output_images"
+      - "\\\\wsl.localhost\\Ubuntu\\mnt\\vpoho_scratch\\3. DROP PDFS HERE:/mnt/input_pdfs"
+      - "\\\\wsl.localhost\\Ubuntu\\mnt\\vpoho_scratch\\4. PROCESSED PDFS:/mnt/output_pdfs"
+    environment:
+      - INPUT_ROOT=/mnt/input_images
+      - OUTPUT_ROOT=/mnt/output_images
+      - PDF_INPUT=/mnt/input_pdfs
+      - PDF_OUTPUT=/mnt/output_pdfs
