@@ -50,20 +50,10 @@ This container uses a mapped Windows network drive (e.g., `P:`) for input/output
 
 1. **Ensure your drive is mapped in Windows**
     
-    In File Explorer, verify that `P:` points to:
-
-    ```
-    \\VPOHO\Scratch
-    ```
+    In File Explorer, verify that `P:` points to ```\\VPOHO\Scratch```
 
 2. **Mount it in WSL:**
-   
-   Open a WSL Ubuntu terminal:
-   ```bash
-   wsl
-   ```
-   
-   Then mount the drive:
+
    ```bash
    sudo mkdir -p /mnt/p
    sudo mount -t drvfs 'P:' /mnt/p
@@ -75,22 +65,13 @@ This container uses a mapped Windows network drive (e.g., `P:`) for input/output
    echo "P: /mnt/p drvfs defaults 0 0" | sudo tee -a /etc/fstab
    ```
 
-3. **Verify it worked:**
-
-   ```bash
-   ls /mnt/p
-   ```
-
-   You should see your folders like `1. DROP IMAGES HERE`, `2. PROCESSED IMAGES`, etc.
-
 ---
 
 ## Building and Running the Container
 
-```bash
-# Open WSL Ubuntu terminal
-wsl
+In WSL:
 
+```bash
 # Navigate to the project directory
 cd /mnt/c/Users/{your_username}/Documents/GitHub/magic-folder
 
@@ -113,7 +94,7 @@ docker-compose up -d --build
 
 ## Monitoring & Logs
 
-To see real-time logs (run from WSL):
+To see real-time logs:
 
 ```bash
 docker logs -f magic-folder
@@ -153,17 +134,6 @@ docker logs -f magic-folder
  ├── input_pdfs/
  └── output_pdfs/
 ```
-
----
-
-## Environment Variables
-
-| Variable      | Default              | Description       |
-| ------------- | -------------------- | ----------------- |
-| `INPUT_ROOT`  | `/mnt/input_images`  | Image input path  |
-| `OUTPUT_ROOT` | `/mnt/output_images` | Image output path |
-| `PDF_INPUT`   | `/mnt/input_pdfs`    | PDF input path    |
-| `PDF_OUTPUT`  | `/mnt/output_pdfs`   | PDF output path   |
 
 ---
 

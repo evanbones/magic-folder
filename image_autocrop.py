@@ -200,7 +200,7 @@ def worker():
     """Background worker that processes queued tasks"""
     while not shutdown_event.is_set():
         try:
-            priority, input_path = task_queue.get(timeout=1.0)
+            _priority, input_path = task_queue.get(timeout=1.0)
             
             if input_path is None: 
                 task_queue.task_done()
@@ -229,10 +229,7 @@ def worker():
             print(f"Worker error: {e}")
 
 def queue_existing_images():
-    """Queue all existing images for processing"""
-    print("Scanning for existing images...")
-    count = 0
-    
+    """Queue all existing images for processing"""    
     for file in INPUT_ROOT.rglob('*'):
         if file.suffix.lower() in SUPPORTED_EXTENSIONS:
             rel_path = file.relative_to(INPUT_ROOT)
@@ -241,10 +238,7 @@ def queue_existing_images():
             if not output_path.exists():
                 priority = get_priority_score(file, is_recent=False)
                 task_queue.put((priority, file))
-                count += 1
         
-    print(f"Queued {count} existing images")
-
 class ImageHandler(FileSystemEventHandler):
     """Watchdog handler with simple batch detection"""
     def __init__(self):
@@ -273,27 +267,27 @@ class ImageHandler(FileSystemEventHandler):
                 self.pending.clear()
             
             is_batch = len(files) >= config.batch_threshold
-            if is_batch:
-                print(f"Batch detected: {len(files)} files")
-            
             for file_path in files:
                 if file_path.exists() and file_path.suffix.lower() in SUPPORTED_EXTENSIONS:
                     priority = get_priority_score(file_path, is_recent=not is_batch)
                     task_queue.put((priority, file_path))
     
+    def _handle_event(self, event):
+        """Handle file creation and modification events."""
+        if event.is_directory:
+            return
+
+        path = Path(event.src_path)
+        if path.suffix.lower() in SUPPORTED_EXTENSIONS:
+            with self.lock:
+                self.pending[path] = time.time()
+
     def on_created(self, event):
-        if not event.is_directory:
-            path= Path(str(event.src_path))
-            if path.suffix.lower() in SUPPORTED_EXTENSIONS:
-                with self.lock:
-                    self.pending[path] = time.time()
+        self._handle_event(event)
 
     def on_modified(self, event):
-        if not event.is_directory:
-            path = Path(str(event.src_path))
-            if path.suffix.lower() in SUPPORTED_EXTENSIONS:
-                with self.lock:
-                    self.pending[path] = time.time()
+        self._handle_event(event)
+
 
 
 if __name__ == "__main__":
@@ -301,11 +295,8 @@ if __name__ == "__main__":
     
     print("Initializing AI background removal model...")
     init_rembg()
-    print("AI model loaded!")
-    
-    print(f"Max workers: {config.max_workers}")
-    print(f"Batch detection: {config.batch_threshold} files in {config.batch_detection_delay}s")
-    
+    print("AI model loaded")
+
     worker_thread = threading.Thread(target=worker)
     worker_thread.start()
 
@@ -313,7 +304,6 @@ if __name__ == "__main__":
 
     print(f"Watching: {INPUT_ROOT}")
 
-    from watchdog.observers.polling import PollingObserver
     observer = PollingObserver() 
     observer.schedule(ImageHandler(), path=str(INPUT_ROOT), recursive=True)
     observer.start()
