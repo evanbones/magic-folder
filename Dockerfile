@@ -26,10 +26,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY image_autocrop.py .
 COPY ocr_pdf.py .
 
-# Create folders
-RUN mkdir -p "/mnt/input_images" "/mnt/output_images" \
-    "/mnt/input_pdfs" "/mnt/output_pdfs"
-
 # Environment variables to configure paths
 ENV INPUT_ROOT=/mnt/input_images \
     OUTPUT_ROOT=/mnt/output_images \

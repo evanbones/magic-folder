@@ -7,10 +7,10 @@ services:
     container_name: magic-folder
     restart: unless-stopped
     volumes:
-      - /mnt/p/1. DROP IMAGES HERE:/mnt/input_images
-      - /mnt/p/2. PROCESSED IMAGES:/mnt/output_images
-      - /mnt/p/3. DROP PDFS HERE:/mnt/input_pdfs
-      - /mnt/p/4. PROCESSED PDFS:/mnt/output_pdfs
+      - "/mnt/p/1. DROP IMAGES HERE:/mnt/input_images"
+      - "/mnt/p/2. PROCESSED IMAGES:/mnt/output_images"
+      - "/mnt/p/3. DROP PDFS HERE:/mnt/input_pdfs"
+      - "/mnt/p/4. PROCESSED PDFS:/mnt/output_pdfs"
 
     environment:
       - INPUT_ROOT=/mnt/input_images

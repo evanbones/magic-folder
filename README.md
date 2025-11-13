@@ -1,7 +1,7 @@
 # Magic Folder (Image & PDF Automation)
 
 This container automates **image cropping/background removal** and **OCR processing for PDFs**.
-It’s designed to run inside **Docker on WSL (Ubuntu)**, using a **Windows-mapped network drive** for input and output.
+It's designed to run inside **Docker on WSL (Ubuntu)**, using a **Windows-mapped network drive** for input and output.
 
 ---
 
@@ -17,7 +17,7 @@ It’s designed to run inside **Docker on WSL (Ubuntu)**, using a **Windows-mapp
 
 1. **Install Docker Desktop for Windows**
 
-   Download and install from [Docker’s official site](https://www.docker.com/products/docker-desktop).
+   Download and install from [Docker's official site](https://www.docker.com/products/docker-desktop).
 
 2. **Install Ubuntu for WSL**
    Open **PowerShell (as Administrator)** and run:
@@ -34,7 +34,13 @@ It’s designed to run inside **Docker on WSL (Ubuntu)**, using a **Windows-mapp
    wsl --set-default Ubuntu
    ```
 
-4. **Restart Docker Desktop**
+4. **Enable WSL integration in Docker Desktop**
+   
+   Open Docker Desktop → Settings → Resources → WSL Integration
+   - Enable "Ubuntu" 
+   - Click "Apply & Restart"
+
+5. **Restart Docker Desktop**
 
 ---
 
@@ -52,11 +58,12 @@ This container uses a mapped Windows network drive (e.g., `P:`) for input/output
 
 2. **Mount it in WSL:**
    
-   In PowerShell:
-   ```powershell
+   Open a WSL Ubuntu terminal:
+   ```bash
    wsl
    ```
-   Then in Bash:
+   
+   Then mount the drive:
    ```bash
    sudo mkdir -p /mnt/p
    sudo mount -t drvfs 'P:' /mnt/p
@@ -78,17 +85,16 @@ This container uses a mapped Windows network drive (e.g., `P:`) for input/output
 
 ---
 
-## Building the Container
+## Building and Running the Container
 
 ```bash
-docker build -t magic-folder .
-```
+# Open WSL Ubuntu terminal
+wsl
 
----
+# Navigate to the project directory
+cd /mnt/c/Users/{your_username}/Documents/GitHub/magic-folder
 
-## Running the Container
-
-```bash
+# Build and start the container
 docker-compose up -d --build
 ```
 
@@ -107,7 +113,7 @@ docker-compose up -d --build
 
 ## Monitoring & Logs
 
-To see real-time logs:
+To see real-time logs (run from WSL):
 
 ```bash
 docker logs -f magic-folder
@@ -119,13 +125,16 @@ docker logs -f magic-folder
 
 ## Maintenance Commands
 
+**All commands must be run from WSL Ubuntu terminal:**
+
 | Action               | Command                             |
 | -------------------- | ----------------------------------- |
-| Stop the container   | `docker stop magic-folder`          |
-| Start it again       | `docker start magic-folder`         |
-| Rebuild the image    | `docker build -t magic-folder .`    |
-| Remove the container | `docker rm -f magic-folder`         |
+| Stop the container   | `docker-compose down`               |
+| Start it again       | `docker-compose up -d`              |
+| Rebuild the image    | `docker-compose up -d --build`      |
+| Remove the container | `docker-compose down -v`            |
 | Shell access         | `docker exec -it magic-folder bash` |
+| View logs            | `docker logs -f magic-folder`       |
 
 ---
 
