@@ -10,6 +10,11 @@ OUTPUT_FOLDER = Path(os.getenv("PDF_OUTPUT", "/mnt/output_pdfs"))
 
 def ocr_pdf(input_pdf: Path):
     output_pdf = OUTPUT_FOLDER / input_pdf.name
+
+    if output_pdf.exists():
+        print(f"Skipping (already processed): {input_pdf.name}")
+        return
+
     try:
         print(f"Processing: {input_pdf.name}")
         ocrmypdf.ocr(
@@ -26,10 +31,12 @@ class PDFHandler(FileSystemEventHandler):
     def on_created(self, event):
         filepath = Path(str(event.src_path))
         if filepath.suffix.lower() == '.pdf':
-            time.sleep(1)
+            time.sleep(1) 
             ocr_pdf(filepath)
 
 if __name__ == "__main__":
+    OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
+
     print("Scanning existing PDFs...")
     for pdf_file in INPUT_FOLDER.glob("*.pdf"):
         ocr_pdf(pdf_file)

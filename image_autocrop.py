@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from watchdog.observers.polling import PollingObserver
 from watchdog.events import FileSystemEventHandler
 import rembg
+from rembg import remove
 import threading
 from queue import PriorityQueue, Empty
 from dataclasses import dataclass
@@ -27,18 +28,10 @@ class Config:
 config = Config()
 
 # Global resources
-rembg_session = None
 executor = ThreadPoolExecutor(max_workers=config.max_workers)
 task_queue = PriorityQueue()
 shutdown_event = threading.Event()
 stats = {"processed": 0, "failed": 0}
-
-def init_rembg():
-    """Initialize rembg session"""
-    global rembg_session
-    if rembg_session is None:
-        rembg_session = rembg.new_session('isnet-general-use')
-    return rembg_session
 
 def get_priority_score(input_path, is_recent=False):
     """Calculate priority score (lower = higher priority)"""
@@ -120,8 +113,7 @@ def crop_with_color_detection(im, min_area=1000, padding=5):
     
     bg_color = get_background_color(np_img)
     
-    # Use higher tolerance for very light backgrounds
-    tolerance = 40 if np.mean(bg_color) > 230 else 35
+    tolerance = 25
     
     mask = create_mask(np_img, bg_color, tolerance)
     
@@ -137,10 +129,9 @@ def crop_with_color_detection(im, min_area=1000, padding=5):
 def crop_with_rembg(im, min_area=1000, padding=5):
     """Remove background using rembg AI model"""
     try:
-        session = init_rembg()
         input_img = im.convert("RGB")
         
-        output_data = rembg.remove(input_img, session=session)
+        output_data = rembg.remove(input_img)
         
         if isinstance(output_data, bytes):
             output_img = Image.open(BytesIO(output_data)).convert("RGBA")
@@ -176,13 +167,10 @@ def process_image(input_path, output_path):
                 input_path.unlink(missing_ok=True)
                 return
             
-            cropped = None
-            if has_transparent_background(im):
-                cropped = crop_with_color_detection(im)
-            else:
+            cropped = crop_with_color_detection(im)
+            
+            if cropped is None and not has_transparent_background(im):
                 cropped = crop_with_rembg(im)
-                if cropped is None:
-                    cropped = crop_with_color_detection(im)
             
             output_path.parent.mkdir(parents=True, exist_ok=True)
             (im if cropped is None else cropped).convert("RGBA").save(output_path)
@@ -289,14 +277,9 @@ class ImageHandler(FileSystemEventHandler):
         self._handle_event(event)
 
 
-
 if __name__ == "__main__":
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     
-    print("Initializing AI background removal model...")
-    init_rembg()
-    print("AI model loaded")
-
     worker_thread = threading.Thread(target=worker)
     worker_thread.start()
 
