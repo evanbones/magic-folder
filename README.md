@@ -56,7 +56,7 @@ This container uses a mapped Windows network drive (e.g., `P:`) for input/output
 
    ```bash
    sudo mkdir -p /mnt/p
-   sudo mount -t drvfs 'P:' /mnt/p
+   sudo mount -t drvfs '\\VPOHO\Scratch' /mnt/p
    ```
 
    *(Optional — to mount automatically on every WSL start)*
