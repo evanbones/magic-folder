@@ -7,10 +7,11 @@ services:
     container_name: magic-folder
     restart: unless-stopped
     volumes:
-      - "\\\\wsl.localhost\\Ubuntu\\mnt\\vpoho_scratch\\1. DROP IMAGES HERE:/mnt/input_images"
-      - "\\\\wsl.localhost\\Ubuntu\\mnt\\vpoho_scratch\\2. PROCESSED IMAGES:/mnt/output_images"
-      - "\\\\wsl.localhost\\Ubuntu\\mnt\\vpoho_scratch\\3. DROP PDFS HERE:/mnt/input_pdfs"
-      - "\\\\wsl.localhost\\Ubuntu\\mnt\\vpoho_scratch\\4. PROCESSED PDFS:/mnt/output_pdfs"
+      - /mnt/p/1. DROP IMAGES HERE:/mnt/input_images
+      - /mnt/p/2. PROCESSED IMAGES:/mnt/output_images
+      - /mnt/p/3. DROP PDFS HERE:/mnt/input_pdfs
+      - /mnt/p/4. PROCESSED PDFS:/mnt/output_pdfs
+
     environment:
       - INPUT_ROOT=/mnt/input_images
       - OUTPUT_ROOT=/mnt/output_images

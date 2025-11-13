@@ -1,115 +1,135 @@
 # Magic Folder (Image & PDF Automation)
 
-This container automates image cropping/background removal and OCR processing for PDFs.
-It’s designed to run using **Docker**, using network-mounted folders for input and output.
+This container automates **image cropping/background removal** and **OCR processing for PDFs**.
+It’s designed to run inside **Docker on WSL (Ubuntu)**, using a **Windows-mapped network drive** for input and output.
 
------
+---
 
 ## Features
 
-  * **Image automation**: Automatic cropping, background removal, and export
-  * **PDF OCR**: Uses `ocrmypdf` and `tesseract` for searchable PDF conversion
-  * **Automatic folder watching**: Monitors input directories for new files
+* **Image automation**: Automatic cropping, background removal, and export
+* **PDF OCR**: Uses `ocrmypdf` + `tesseract` for searchable PDFs
+* **Folder watching**: Continuous input monitoring for new files
 
------
+---
 
 ## Prerequisites
 
-1.  **Install Docker Desktop:** Download and install it from the official website.
-2.  **Install Ubuntu for WSL:** Open **PowerShell (as Administrator)** and run:
-    ```powershell
-    wsl --install -d Ubuntu
+1. **Install Docker Desktop for Windows**
+
+   Download and install from [Docker’s official site](https://www.docker.com/products/docker-desktop).
+
+2. **Install Ubuntu for WSL**
+   Open **PowerShell (as Administrator)** and run:
+
+   ```powershell
+   wsl --install -d Ubuntu
+   ```
+
+   Set up your UNIX username/password when prompted.
+
+3. **Set Ubuntu as the default WSL backend**
+
+   ```powershell
+   wsl --set-default Ubuntu
+   ```
+
+4. **Restart Docker Desktop**
+
+---
+
+## One-Time WSL Setup
+
+This container uses a mapped Windows network drive (e.g., `P:`) for input/output.
+
+1. **Ensure your drive is mapped in Windows**
+    
+    In File Explorer, verify that `P:` points to:
+
     ```
-      * This will install Ubuntu. It will ask you to create a **UNIX username and password**.
-3.  **Set Ubuntu as Default WSL Backend:**
-    ```powershell
-    wsl --set-default Ubuntu
-    ```
-4.  **Restart Docker Desktop** 
-
------
-
-## Setup (One-Time Only)
-
-This container requires a one-time setup script to mount your network drive.
-
-1.  **Clone this repo**
-
-2.  **Enter your Ubuntu terminal:** 
-
-    ```powershell
-    wsl
-    ```
-
-3.  **Navigate to the project:**
-
-    ```bash
-    # Example (change to actual project path):
-    cd /mnt/c/Users/{your-username}/Documents/GitHub/magic-folder
-    ```
-
-4.  **Prepare and Run the Script:**
-    This will install `dos2unix` (to fix Windows file formatting), make the script executable, and run it.
-
-    ```bash
-    sudo apt-get update && sudo apt-get install -y dos2unix
-    dos2unix setup.sh
-    chmod +x setup.sh
-    ./setup.sh
+    \\VPOHO\Scratch
     ```
 
------
+2. **Mount it in WSL:**
+   
+   In PowerShell:
+   ```powershell
+   wsl
+   ```
+   Then in Bash:
+   ```bash
+   sudo mkdir -p /mnt/p
+   sudo mount -t drvfs 'P:' /mnt/p
+   ```
 
-## Building Container
+   *(Optional — to mount automatically on every WSL start)*
 
-```powershell
+   ```bash
+   echo "P: /mnt/p drvfs defaults 0 0" | sudo tee -a /etc/fstab
+   ```
+
+3. **Verify it worked:**
+
+   ```bash
+   ls /mnt/p
+   ```
+
+   You should see your folders like `1. DROP IMAGES HERE`, `2. PROCESSED IMAGES`, etc.
+
+---
+
+## Building the Container
+
+```bash
 docker build -t magic-folder .
 ```
 
------
+---
 
-## Running Container
+## Running the Container
 
-```powershell
+```bash
 docker-compose up -d --build
 ```
 
+---
+
 ### Mount Mappings
 
-| Host Folder (WSL/Ubuntu) | Container Path | Purpose |
-| --- | --- | --- |
-| `/mnt/vpoho_scratch/1. DROP IMAGES HERE` | `/mnt/input_images` | Image input folder |
-| `/mnt/vpoho_scratch/2. PROCESSED IMAGES` | `/mnt/output_images` | Processed images output |
-| `/mnt/vpoho_scratch/3. DROP PDFS HERE` | `/mnt/input_pdfs` | PDF input folder |
-| `/mnt/vpoho_scratch/4. PROCESSED PDFS` | `/mnt/output_pdfs` | Processed OCR PDFs |
+| Host Folder (WSL)            | Container Path       | Purpose       |
+| ---------------------------- | -------------------- | ------------- |
+| `/mnt/p/1. DROP IMAGES HERE` | `/mnt/input_images`  | Input images  |
+| `/mnt/p/2. PROCESSED IMAGES` | `/mnt/output_images` | Output images |
+| `/mnt/p/3. DROP PDFS HERE`   | `/mnt/input_pdfs`    | Input PDFs    |
+| `/mnt/p/4. PROCESSED PDFS`   | `/mnt/output_pdfs`   | Output PDFs   |
 
------
+---
 
-## Monitoring and Logs
+## Monitoring & Logs
 
-Check container logs in real time:
+To see real-time logs:
 
-```powershell
+```bash
 docker logs -f magic-folder
 ```
 
-Stop viewing logs with `Ctrl + C`.
+*(Press `Ctrl + C` to exit)*
 
------
+---
 
 ## Maintenance Commands
 
-| Action | Command |
-| --- | --- |
-| Stop the container | `docker stop magic-folder` |
-| Start it again | `docker start magic-folder` |
-| Rebuild the image | `docker build -t magic-folder .` |
-| Remove old container | `docker rm -f magic-folder` |
-| Shell access inside container | `docker exec -it magic-folder bash` |
+| Action               | Command                             |
+| -------------------- | ----------------------------------- |
+| Stop the container   | `docker stop magic-folder`          |
+| Start it again       | `docker start magic-folder`         |
+| Rebuild the image    | `docker build -t magic-folder .`    |
+| Remove the container | `docker rm -f magic-folder`         |
+| Shell access         | `docker exec -it magic-folder bash` |
 
------
+---
 
-## Folder Structure (inside container)
+## Folder Layout (inside container)
 
 ```
 /app
@@ -119,29 +139,29 @@ Stop viewing logs with `Ctrl + C`.
  └── Dockerfile
 
 /mnt
- ├── input_images/ 
+ ├── input_images/
  ├── output_images/
- ├── input_pdfs/ 
+ ├── input_pdfs/
  └── output_pdfs/
 ```
 
------
+---
 
 ## Environment Variables
 
-These are automatically set in the container and point to the container's internal paths.
-
-| Variable | Default | Description |
-| --- | --- | --- |
-| `INPUT_ROOT` | `/mnt/input_images` | Image input path |
+| Variable      | Default              | Description       |
+| ------------- | -------------------- | ----------------- |
+| `INPUT_ROOT`  | `/mnt/input_images`  | Image input path  |
 | `OUTPUT_ROOT` | `/mnt/output_images` | Image output path |
-| `PDF_INPUT` | `/mnt/input_pdfs` | PDF input path |
-| `PDF_OUTPUT` | `/mnt/output_pdfs` | PDF output path |
+| `PDF_INPUT`   | `/mnt/input_pdfs`    | PDF input path    |
+| `PDF_OUTPUT`  | `/mnt/output_pdfs`   | PDF output path   |
 
------
+---
 
 ## License
 
 Intended for internal use only.
 
 This project is licensed under the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+---
