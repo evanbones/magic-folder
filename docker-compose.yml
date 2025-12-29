@@ -4,14 +4,17 @@ services:
     build: .
     container_name: magic-folder
     restart: unless-stopped
-    volumes:
-      - "/mnt/p/1. DROP IMAGES HERE:/mnt/input_images"
-      - "/mnt/p/2. PROCESSED IMAGES:/mnt/output_images"
-      - "/mnt/p/3. DROP PDFS HERE:/mnt/input_pdfs"
-      - "/mnt/p/4. PROCESSED PDFS:/mnt/output_pdfs"
+    
+    extra_hosts:
+      - "VPOHO:192.168.0.5"
+    
+    cap_add:
+      - SYS_ADMIN
+      - DAC_READ_SEARCH
+    security_opt:
+      - apparmor:unconfined
 
     environment:
-      - INPUT_ROOT=/mnt/input_images
-      - OUTPUT_ROOT=/mnt/output_images
-      - PDF_INPUT=/mnt/input_pdfs
-      - PDF_OUTPUT=/mnt/output_pdfs
+      - SMB_USER=${SMB_USER}
+      - SMB_PASS=${SMB_PASS}
+      - SMB_DOMAIN=${SMB_DOMAIN}

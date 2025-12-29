@@ -14,8 +14,8 @@ from io import BytesIO
 from pathlib import Path
 import gc
 
-INPUT_ROOT = Path(os.getenv("INPUT_ROOT", "/mnt/input_images"))
-OUTPUT_ROOT = Path(os.getenv("OUTPUT_ROOT", "/mnt/output_images"))
+INPUT_ROOT = Path(os.getenv("INPUT_ROOT", "/mnt/data/1. DROP IMAGES HERE"))
+OUTPUT_ROOT = Path(os.getenv("OUTPUT_ROOT", "/mnt/data/2. PROCESSED IMAGES"))
 
 SUPPORTED_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.webp', '.tif')
 

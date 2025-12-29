@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Prevent interactive prompts during install
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies for OCRmyPDF and image processing
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     ghostscript \
@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     libxext6 \
     poppler-utils \
+    cifs-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -25,12 +26,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy scripts
 COPY image_autocrop.py .
 COPY ocr_pdf.py .
+COPY start.sh .
 
-# Environment variables to configure paths
-ENV INPUT_ROOT=/mnt/input_images \
-    OUTPUT_ROOT=/mnt/output_images \
-    PDF_INPUT=/mnt/input_pdfs \
-    PDF_OUTPUT=/mnt/output_pdfs
+# Make start script executable
+RUN chmod +x start.sh
 
-# Start both processors concurrently
-CMD ["bash", "-c", "python3 -u image_autocrop.py & python3 -u ocr_pdf.py & wait"]
+# Environment variables
+ENV NUMBA_CACHE_DIR=/tmp/numba_cache
+
+ENV INPUT_ROOT=/mnt/data/1.\ DROP\ IMAGES\ HERE \
+    OUTPUT_ROOT=/mnt/data/2.\ PROCESSED\ IMAGES \
+    PDF_INPUT=/mnt/data/3.\ DROP\ PDFS\ HERE \
+    PDF_OUTPUT=/mnt/data/4.\ PROCESSED\ PDFS
+
+# Start via the shell script
+CMD ["./start.sh"]
