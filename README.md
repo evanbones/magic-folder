@@ -54,7 +54,7 @@ sudo mkdir -p /mnt/p
 3. **Mount the Drive:**
 *Replace `YOUR_USER` and `YOUR_PASS` with your Windows/Network credentials.*
 ```bash
-sudo mount -t cifs -o username=YOUR_USER,password=YOUR_PASS,uid=$(id -u),gid=$(id -g) //VPOHO/Scratch /mnt/p
+sudo mount -t cifs -o 'username=YOUR_USERNAME,password=YOUR_PASSWORD,uid=1000,gid=1000' //VPOHO/Scratch /mnt/p
 ```
 
 
@@ -71,7 +71,7 @@ To avoid typing the mount command every time you restart WSL, add it to your pro
 # Auto-mount Network Drive for Docker
 if [ -z "$(ls -A /mnt/p)" ]; then
     echo "Mounting Magic Folder Drive..."
-    sudo mount -t cifs -o username=YOUR_USER,password=YOUR_PASS,uid=$(id -u),gid=$(id -g) //VPOHO/Scratch /mnt/p
+    sudo mount -t cifs -o 'username=YOUR_USERNAME,password=YOUR_PASSWORD,uid=1000,gid=1000' //VPOHO/Scratch /mnt/p
 fi
 ```
 
