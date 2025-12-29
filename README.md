@@ -1,9 +1,8 @@
 # Magic Folder (Image & PDF Automation)
 
 This container automates **image cropping/background removal** and **OCR processing for PDFs**.
-It's designed to run inside **Docker on WSL (Ubuntu)**, using a **Windows-mapped network drive** for input and output.
+It is designed to run using **Docker Desktop for Windows** with the **WSL 2 backend**, accessing files directly from the network share via a Linux mount.
 
----
 
 ## Features
 
@@ -11,13 +10,13 @@ It's designed to run inside **Docker on WSL (Ubuntu)**, using a **Windows-mapped
 * **PDF OCR**: Uses `ocrmypdf` + `tesseract` for searchable PDFs
 * **Folder watching**: Continuous input monitoring for new files
 
----
+
 
 ## Prerequisites
 
 1. **Install Docker Desktop for Windows**
-
-   Download and install from [Docker's official site](https://www.docker.com/products/docker-desktop).
+   * Download and install from [Docker's official site](https://www.docker.com/products/docker-desktop).
+   * During installation, ensure **"Use WSL 2 instead of Hyper-V"** is checked.
 
 2. **Install Ubuntu for WSL**
    Open **PowerShell (as Administrator)** and run:
@@ -26,50 +25,61 @@ It's designed to run inside **Docker on WSL (Ubuntu)**, using a **Windows-mapped
    wsl --install -d Ubuntu
    ```
 
-   Set up your UNIX username/password when prompted.
+*Follow the prompts to create your UNIX username and password.*
 
-3. **Set Ubuntu as the default WSL backend**
+3. **Enable WSL Integration**
+   * Open **Docker Desktop Dashboard**.
+   * Go to **Settings (Gear Icon) → Resources → WSL Integration**.
+   * Toggle the switch for **Ubuntu** to ON.
+   * Click **Apply & Restart**.
 
-   ```powershell
-   wsl --set-default Ubuntu
-   ```
 
-4. **Enable WSL integration in Docker Desktop**
-   
-   Open Docker Desktop → Settings → Resources → WSL Integration
-   - Enable "Ubuntu" 
-   - Click "Apply & Restart"
+## One-Time WSL Setup 
 
-5. **Restart Docker Desktop**
+For Docker to see the network drive, we must mount the network share using the native Linux SMB protocol (`cifs`).
 
----
+**Run the following commands inside your WSL (Ubuntu) terminal:**
 
-## One-Time WSL Setup
+1. **Install CIFS Utilities:**
+```bash
+sudo apt update && sudo apt install -y cifs-utils
+```
 
-This container uses a mapped Windows network drive (e.g., `P:`) for input/output.
+2. **Create the Mount Point:**
+```bash
+sudo mkdir -p /mnt/p
+```
 
-1. **Ensure your drive is mapped in Windows**
-    
-    In File Explorer, verify that `P:` points to ```\\VPOHO\Scratch```
 
-2. **Mount it in WSL:**
+3. **Mount the Drive:**
+*Replace `YOUR_USER` and `YOUR_PASS` with your Windows/Network credentials.*
+```bash
+sudo mount -t cifs -o username=YOUR_USER,password=YOUR_PASS,uid=$(id -u),gid=$(id -g) //VPOHO/Scratch /mnt/p
+```
 
-   ```bash
-   sudo mkdir -p /mnt/p
-   sudo mount -t drvfs 'P:' /mnt/p
-   ```
 
-   *(Optional — to mount automatically on every WSL start)*
+4. **Verify the Connection:**
+Run `ls -la /mnt/p`. You should see folders like `1. DROP IMAGES HERE`.
 
-   ```bash
-   echo "P: /mnt/p drvfs defaults 0 0" | sudo tee -a /etc/fstab
-   ```
+### Automate Mount on Startup (Recommended)
 
----
+To avoid typing the mount command every time you restart WSL, add it to your profile:
+
+1. Open your bash config: `nano ~/.bashrc`
+2. Scroll to the bottom and paste this block (replace your credentials):
+```bash
+# Auto-mount Network Drive for Docker
+if [ -z "$(ls -A /mnt/p)" ]; then
+    echo "Mounting Magic Folder Drive..."
+    sudo mount -t cifs -o username=YOUR_USER,password=YOUR_PASS,uid=$(id -u),gid=$(id -g) //VPOHO/Scratch /mnt/p
+fi
+```
+
+3. Save (Ctrl+O, Enter) and Exit (Ctrl+X).
 
 ## Building and Running the Container
 
-In WSL:
+Once the drive is mounted at `/mnt/p`, you can run the container from your Ubuntu terminal:
 
 ```bash
 # Navigate to the project directory
@@ -83,14 +93,14 @@ docker-compose up -d --build
 
 ### Mount Mappings
 
-| Host Folder (WSL)            | Container Path       | Purpose       |
-| ---------------------------- | -------------------- | ------------- |
-| `/mnt/p/1. DROP IMAGES HERE` | `/mnt/input_images`  | Input images  |
+| Host Folder (WSL) | Container Path | Purpose |
+| --- | --- | --- |
+| `/mnt/p/1. DROP IMAGES HERE` | `/mnt/input_images` | Input images |
 | `/mnt/p/2. PROCESSED IMAGES` | `/mnt/output_images` | Output images |
-| `/mnt/p/3. DROP PDFS HERE`   | `/mnt/input_pdfs`    | Input PDFs    |
-| `/mnt/p/4. PROCESSED PDFS`   | `/mnt/output_pdfs`   | Output PDFs   |
+| `/mnt/p/3. DROP PDFS HERE` | `/mnt/input_pdfs` | Input PDFs |
+| `/mnt/p/4. PROCESSED PDFS` | `/mnt/output_pdfs` | Output PDFs |
 
----
+
 
 ## Monitoring & Logs
 
@@ -102,45 +112,23 @@ docker logs -f magic-folder
 
 *(Press `Ctrl + C` to exit)*
 
----
+
 
 ## Maintenance Commands
 
 **All commands must be run from WSL Ubuntu terminal:**
 
-| Action               | Command                             |
-| -------------------- | ----------------------------------- |
-| Stop the container   | `docker-compose down`               |
-| Start it again       | `docker-compose up -d`              |
-| Rebuild the image    | `docker-compose up -d --build`      |
-| Remove the container | `docker-compose down -v`            |
-| Shell access         | `docker exec -it magic-folder bash` |
-| View logs            | `docker logs -f magic-folder`       |
-
----
-
-## Folder Layout (inside container)
-
-```
-/app
- ├── image_autocrop.py
- ├── ocr_pdf.py
- ├── requirements.txt
- └── Dockerfile
-
-/mnt
- ├── input_images/
- ├── output_images/
- ├── input_pdfs/
- └── output_pdfs/
-```
+| Action | Command |
+| --- | --- |
+| Stop the container | `docker-compose down` |
+| Start it again | `docker-compose up -d` |
+| Rebuild the image | `docker-compose up -d --build` |
+| Remove the container | `docker-compose down -v` |
+| Shell access | `docker exec -it magic-folder bash` |
 
 ---
 
 ## License
 
 Intended for internal use only.
-
 This project is licensed under the [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
-
----
