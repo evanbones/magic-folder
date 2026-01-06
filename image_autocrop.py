@@ -160,29 +160,53 @@ def crop_with_rembg(im, min_area=1000, padding=5):
 
 def process_image(input_path, output_path):
     """Process a single image"""
+    should_delete = False
+    
     try:
+        if not input_path.exists():
+            return
+
         with Image.open(input_path) as im:
+            im.load() 
+            
             if im.width < 50 or im.height < 50:
                 im.convert("RGBA").save(output_path)
-                input_path.unlink(missing_ok=True)
-                return
-            
-            cropped = crop_with_color_detection(im)
-            
-            if cropped is None and not has_transparent_background(im):
-                cropped = crop_with_rembg(im)
-            
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-            (im if cropped is None else cropped).convert("RGBA").save(output_path)
-            stats["processed"] += 1
-            
-            input_path.unlink(missing_ok=True)
+                should_delete = True
+            else:
+                cropped = crop_with_color_detection(im)
                 
+                if cropped is None and not has_transparent_background(im):
+                    cropped = crop_with_rembg(im)
+                
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                (im if cropped is None else cropped).convert("RGBA").save(output_path)
+                stats["processed"] += 1
+                should_delete = True
+        
+        if should_delete:
+            delete_with_retry(input_path)
+
     except Exception as e:
-        print(f"Error processing {input_path}: {e}")
+        print(f"Error processing {input_path.name}: {e}")
         stats["failed"] += 1
     finally:
         gc.collect()
+
+def delete_with_retry(file_path, retries=5, delay=1.0):
+    """Attempt to delete a file"""
+    import time
+    for i in range(retries):
+        try:
+            if not file_path.exists():
+                return
+            file_path.unlink()
+            return
+        except OSError as e:
+            if e.errno in (16, 13): 
+                time.sleep(delay * (i + 1))
+            else:
+                print(f"Warning: Could not delete {file_path.name}: {e}")
+                break
 
 def worker():
     """Background worker that processes queued tasks"""
