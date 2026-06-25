@@ -106,25 +106,45 @@ def find_bbox(mask, min_area=1000, padding=5):
         min(h, bottom + padding)
     )
 
+def is_simple_background(img, sample_size=10, max_spread=40):
+    """Return True if all corners share a similar color (solid/uniform background)."""
+    h, w = img.shape[:2]
+    s = max(1, min(sample_size, min(h, w) // 4))
+
+    corner_medians = [
+        np.median(img[0:s, 0:s, :3].reshape(-1, 3), axis=0),
+        np.median(img[0:s, w-s:w, :3].reshape(-1, 3), axis=0),
+        np.median(img[h-s:h, 0:s, :3].reshape(-1, 3), axis=0),
+        np.median(img[h-s:h, w-s:w, :3].reshape(-1, 3), axis=0),
+    ]
+
+    for i in range(len(corner_medians)):
+        for j in range(i + 1, len(corner_medians)):
+            dist = np.sqrt(np.sum((corner_medians[i] - corner_medians[j]) ** 2))
+            if dist > max_spread:
+                return False
+    return True
+
 def crop_with_color_detection(im, min_area=1000, padding=5):
-    """Crop using color-based background detection"""
+    """Crop and make background transparent using color detection"""
     im = im.convert("RGBA")
     np_img = np.array(im)
-    
+
     bg_color = get_background_color(np_img)
-    
-    tolerance = 25
-    
-    mask = create_mask(np_img, bg_color, tolerance)
-    
+    mask = create_mask(np_img, bg_color, tolerance=25)
+
     if np.sum(mask) < min_area:
         return None
-    
+
     bbox = find_bbox(mask, min_area, padding)
     if bbox is None:
         return None
-    
-    return im.crop(bbox)
+
+    # Make background pixels transparent
+    result = np_img.copy()
+    result[~mask, 3] = 0
+
+    return Image.fromarray(result, 'RGBA').crop(bbox)
 
 def crop_with_rembg(im, min_area=1000, padding=5):
     """Remove background using rembg AI model"""
@@ -173,13 +193,24 @@ def process_image(input_path, output_path):
                 im.convert("RGBA").save(output_path)
                 should_delete = True
             else:
-                cropped = crop_with_color_detection(im)
-                
-                if cropped is None and not has_transparent_background(im):
-                    cropped = crop_with_rembg(im)
-                
+                cropped = None
+
+                if has_transparent_background(im):
+                    rgba = im.convert("RGBA")
+                    mask = np.array(rgba)[:, :, 3] > 10
+                    bbox = find_bbox(mask)
+                    cropped = rgba.crop(bbox) if bbox else None
+                else:
+                    np_img = np.array(im.convert("RGBA"))
+                    if is_simple_background(np_img):
+                        cropped = crop_with_color_detection(im)
+                    else:
+                        cropped = crop_with_rembg(im)
+                        if cropped is None:
+                            cropped = crop_with_color_detection(im)
+
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                (im if cropped is None else cropped).convert("RGBA").save(output_path)
+                (cropped if cropped is not None else im).convert("RGBA").save(output_path)
                 stats["processed"] += 1
                 should_delete = True
         
